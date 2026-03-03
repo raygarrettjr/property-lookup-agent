@@ -1,0 +1,86 @@
+{
+  "name": "property_lookup_agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b84479dc-4f45-4c63-90d1-dc5c21df9d32",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7f478ee4-af57-4b29-b4d9-b963f8708016",
+      "name": "Webhook",
+      "webhookId": "b84479dc-4f45-4c63-90d1-dc5c21df9d32"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    message: \"Lookup agent placeholder — workflow connected successfully.\"\n  }\n];;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b5e7bc02-cf88-4c69-b804-2efb63150376",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3b60be42-7b99-476d-8002-34d7911ffabf",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0d180037-4393-40d4-ba38-a6cd50105c5d",
+  "meta": {
+    "instanceId": "5903047529edf559acb761c2049eb615a24c5dfbd9abf2da0fd38fb83b02aaac"
+  },
+  "id": "1MW9T4mtNKqGIFMH",
+  "tags": []
+}
