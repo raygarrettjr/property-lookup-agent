@@ -4,13 +4,40 @@
   <meta charset="UTF-8">
   <title>Property Lookup Agent</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-    label { display: block; margin-top: 20px; font-weight: bold; }
-    input { width: 100%; padding: 8px; margin-top: 5px; }
-    .dropdown { border: 1px solid #ccc; max-height: 200px; overflow-y: auto; }
-    .dropdown-item { padding: 6px; cursor: pointer; border-bottom: 1px solid #eee; }
-    .dropdown-item:hover { background: #f0f0f0; }
-    #results { margin-top: 30px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      max-width: 700px; 
+      margin: 40px auto; 
+      line-height: 1.5;
+    }
+    label { 
+      display: block; 
+      margin-top: 20px; 
+      font-weight: bold; 
+    }
+    input { 
+      width: 100%; 
+      padding: 8px; 
+      margin-top: 5px; 
+      font-size: 16px;
+    }
+    .dropdown { 
+      border: 1px solid #ccc; 
+      max-height: 200px; 
+      overflow-y: auto; 
+      margin-top: 5px;
+    }
+    .dropdown-item { 
+      padding: 6px; 
+      cursor: pointer; 
+      border-bottom: 1px solid #eee; 
+    }
+    .dropdown-item:hover { 
+      background: #f0f0f0; 
+    }
+    #results { 
+      margin-top: 30px; 
+    }
   </style>
 </head>
 
@@ -76,14 +103,17 @@
       numInput.value = item.number;
       streetInput.value = item.street;
 
-      // TODO: Replace with your n8n webhook URL
-      fetch('YOUR_WEBHOOK_URL_HERE', {
+      // Send PIN to n8n webhook
+      fetch('https://fuseon.app.n8n.cloud/webhook-test/b84479dc-4f45-4c63-90d1-dc5c21df9d32', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: item.pin })
       })
       .then(res => res.text())
-      .then(html => results.innerHTML = html);
+      .then(html => results.innerHTML = html)
+      .catch(err => {
+        results.innerHTML = "<p style='color:red;'>Error contacting lookup service.</p>";
+      });
     }
 
     numInput.addEventListener('input', filterAddresses);
