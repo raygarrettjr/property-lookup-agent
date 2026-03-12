@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Raleigh Property Lookup</title>
+  <title>Utility Provider Finder</title>
 
   <style>
     body {
@@ -58,153 +58,128 @@
       color: #555;
     }
 
-    #results {
-      margin-top: 40px;
+    /* Navigation matching index.html */
+    .nav {
+      margin-bottom: 20px;
     }
 
-    /* Autocomplete dropdown */
-    .dropdown {
-      border: 1px solid #ccc;
-      max-height: 200px;
-      overflow-y: auto;
-      margin-top: 5px;
+    .nav a {
+      margin-right: 20px;
+      font-weight: bold;
+      color: #4CAF50;
+      text-decoration: none;
+    }
+
+    .nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* Utility cards */
+    .card {
       background: white;
-      display: none;
-      position: relative;
-      z-index: 10;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
     }
 
-    .dropdown-item {
-      padding: 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-
-    .dropdown-item:hover {
-      background: #f0f0f0;
+    .card b {
+      font-size: 18px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Raleigh Property Lookup</h1>
+  <!-- Navigation -->
+  <div class="nav">
+    <a href="index.html">Property Lookup</a>
+    <a href="utility.html">Utility Finder</a>
+  </div>
 
-  <label>Street Number</label>
-  <input id="numInput" type="text" autocomplete="off">
+  <h1>Utility Provider Finder</h1>
 
-  <label>Street Name</label>
-  <input id="streetInput" type="text" autocomplete="off">
+  <label>Street Address</label>
+  <input id="street" type="text" placeholder="123 Main Street">
 
-  <div id="autocomplete" class="dropdown"></div>
+  <label>City</label>
+  <input id="city" type="text" placeholder="Raleigh">
 
-  <button onclick="manualSubmit()">Submit</button>
+  <label>State</label>
+  <input id="state" type="text" placeholder="NC">
+
+  <label>ZIP Code</label>
+  <input id="zip" type="text" placeholder="27612">
+
+  <button onclick="lookupUtilities()">Find Utilities</button>
 
   <div id="thinking">Thinking…</div>
 
   <div id="results"></div>
 
   <script>
-    let addresses = [];
+    async function lookupUtilities() {
+      const street = document.getElementById("street").value.trim();
+      const city = document.getElementById("city").value.trim();
+      const state = document.getElementById("state").value.trim();
+      const zip = document.getElementById("zip").value.trim();
 
-    // Load addresses.json
-    fetch('addresses.json')
-      .then(res => res.json())
-      .then(data => addresses = data);
-
-    const numInput = document.getElementById('numInput');
-    const streetInput = document.getElementById('streetInput');
-    const dropdown = document.getElementById('autocomplete');
-    const results = document.getElementById('results');
-    const thinking = document.getElementById('thinking');
-
-    function filterAddresses() {
-      const num = numInput.value.trim();
-      const street = streetInput.value.trim().toUpperCase();
-
-      if (!num && !street) {
-        dropdown.style.display = 'none';
-        dropdown.innerHTML = '';
+      if (!street || !city || !state || !zip) {
+        alert("Please fill out all fields.");
         return;
       }
 
-      const matches = addresses
-        .filter(a =>
-          a.number.toString().startsWith(num) &&
-          a.street.includes(street)
-        )
-        .slice(0, 20);
+      const payload = {
+        street_address: street,
+        city: city,
+        state: state,
+        zip: zip
+      };
 
-      renderDropdown(matches);
-    }
+      document.getElementById("thinking").style.display = "block";
+      document.getElementById("results").innerHTML = "";
 
-    function renderDropdown(list) {
-      dropdown.innerHTML = '';
+      try {
+        const response = await fetch(
+          "https://fuseon.app.n8n.cloud/webhook/32e98d26-deb0-4cf1-b72d-dc96c8f973eb",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }
+        );
 
-      if (list.length === 0) {
-        dropdown.style.display = 'none';
-        return;
+        const data = await response.json();
+        document.getElementById("thinking").style.display = "none";
+
+        if (!Array.isArray(data)) {
+          document.getElementById("results").innerHTML =
+            "<p>Unexpected response format.</p>";
+          return;
+        }
+
+        // Render stacked cards
+        data.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          card.innerHTML = `
+            <b>${item.utility_company_name}</b><br>
+            <strong>Service:</strong> ${item.services_provided}<br>
+            <strong>Phone:</strong> ${item.connection_phone}<br>
+            <strong>Email:</strong> ${item.connection_email}<br>
+            <strong>How to connect:</strong> ${item.how_to_connect}
+          `;
+
+          document.getElementById("results").appendChild(card);
+        });
+
+      } catch (err) {
+        document.getElementById("thinking").style.display = "none";
+        document.getElementById("results").innerHTML =
+          "<p style='color:red;'>Error retrieving utility information.</p>";
       }
-
-      list.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'dropdown-item';
-        div.textContent = item.address;
-        div.onclick = () => selectAddress(item);
-        dropdown.appendChild(div);
-      });
-
-      dropdown.style.display = 'block';
     }
-
-    function selectAddress(item) {
-      dropdown.innerHTML = '';
-      dropdown.style.display = 'none';
-
-      numInput.value = item.number;
-      streetInput.value = item.street;
-
-      submitToWebhook(item.pin);
-    }
-
-    function manualSubmit() {
-      const num = numInput.value.trim();
-      const street = streetInput.value.trim().toUpperCase();
-
-      const match = addresses.find(
-        a => a.number.toString() === num && a.street === street
-      );
-
-      if (!match) {
-        alert("Address not found. Please select from the dropdown.");
-        return;
-      }
-
-      submitToWebhook(match.pin);
-    }
-
-    function submitToWebhook(pin) {
-      thinking.style.display = "block";
-      results.innerHTML = "";
-
-      fetch('https://fuseon.app.n8n.cloud/webhook/b84479dc-4f45-4c63-90d1-dc5c21df9d32', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin })
-      })
-      .then(res => res.text())
-      .then(html => {
-        thinking.style.display = "none";
-        results.innerHTML = html;
-      })
-      .catch(err => {
-        thinking.style.display = "none";
-        results.innerHTML = "<p style='color:red;'>Error contacting lookup service.</p>";
-      });
-    }
-
-    numInput.addEventListener('input', filterAddresses);
-    streetInput.addEventListener('input', filterAddresses);
   </script>
 
 </body>
